@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Авито Недвижимость — исследование нового инструмента</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif; background: #f4f4f4; color: #1a1a1a; }
+
+.avito-header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 12px 24px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; }
+.avito-logo { background: #00A046; color: #fff; font-weight: 800; font-size: 17px; padding: 5px 11px; border-radius: 6px; letter-spacing: -0.5px; }
+.avito-header-title { font-size: 14px; color: #777; }
+
+.survey-body { max-width: 680px; margin: 0 auto; padding: 32px 16px 64px; }
+
+.step { display: none; }
+.step.active { display: block; }
+
+.progress-bar { background: #e5e5e5; border-radius: 4px; height: 4px; margin-bottom: 28px; }
+.progress-fill { background: #00A046; height: 4px; border-radius: 4px; transition: width 0.4s ease; }
+
+.step-label { font-size: 12px; color: #999; margin-bottom: 8px; letter-spacing: 0.3px; text-transform: uppercase; }
+.step-title { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; line-height: 1.3; }
+.step-sub { font-size: 15px; color: #666; margin-bottom: 28px; line-height: 1.5; }
+
+.role-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.role-card { background: #fff; border: 2px solid #e5e5e5; border-radius: 12px; padding: 24px 20px; cursor: pointer; transition: border-color 0.2s, background 0.2s; text-align: left; }
+.role-card:hover { border-color: #00A046; }
+.role-card.selected { border-color: #00A046; background: #f0faf4; }
+.role-icon { font-size: 32px; margin-bottom: 12px; }
+.role-name { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+.role-desc { font-size: 13px; color: #888; line-height: 1.4; }
+
+.q-block { margin-bottom: 20px; }
+.q-label { font-size: 14px; font-weight: 500; color: #333; margin-bottom: 10px; }
+.q-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.q-opt { background: #fff; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 9px 16px; font-size: 14px; color: #333; cursor: pointer; transition: all 0.15s; user-select: none; }
+.q-opt:hover { border-color: #00A046; color: #00A046; }
+.q-opt.selected { border-color: #00A046; background: #f0faf4; color: #007a35; font-weight: 500; }
+
+/* ── АВИТО-СТИЛЬ МОКАПЫ ── */
+.mock-wrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.mock-topbar { background: #fff; border-bottom: 1px solid #e8e8e8; padding: 10px 16px; display: flex; align-items: center; gap: 8px; }
+.mock-topbar-logo { background: #00A046; color: #fff; font-weight: 800; font-size: 12px; padding: 3px 7px; border-radius: 4px; }
+.mock-topbar-title { font-size: 12px; color: #999; flex: 1; }
+.mock-topbar-user { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+.mock-avatar { width: 22px; height: 22px; border-radius: 50%; background: #e8f5ee; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; color: #00A046; }
+
+.mock-body { padding: 16px; background: #f8f8f8; }
+.mock-greeting { font-size: 17px; font-weight: 600; color: #1a1a1a; margin-bottom: 2px; }
+.mock-subgreeting { font-size: 12px; color: #999; margin-bottom: 14px; }
+
+.mock-section-label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 6px; }
+
+.mock-cards-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 2px; }
+.mock-card { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 10px 12px; }
+.mock-card-num { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+.mock-card-lbl { font-size: 11px; color: #999; margin-top: 1px; }
+.mock-card-badge { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; padding: 2px 7px; border-radius: 10px; margin-top: 5px; font-weight: 500; }
+.badge-warn { background: #fff3e0; color: #e65100; }
+.badge-ok { background: #e8f5ee; color: #00703a; }
+.badge-slow { background: #fff8e1; color: #f57c00; }
+.mock-card-num-green { color: #00A046; }
+.mock-card-num-red { color: #d32f2f; }
+.mock-card-num-orange { color: #f57c00; }
+
+/* Качество звонков */
+.mock-quality-box { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.mock-score-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.mock-score-big { font-size: 32px; font-weight: 700; color: #d32f2f; line-height: 1; }
+.mock-score-denom { font-size: 14px; color: #bbb; font-weight: 400; }
+.mock-score-label { font-size: 11px; color: #d32f2f; margin-top: 3px; }
+.mock-score-badge { background: #fce4e4; color: #c62828; font-size: 11px; padding: 3px 10px; border-radius: 10px; display: inline-block; }
+.mock-problems-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 6px; }
+.mock-prob-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
+.mock-prob-label { font-size: 12px; color: #444; display: flex; align-items: center; gap: 5px; }
+.mock-prob-icon-warn { color: #e65100; font-size: 12px; }
+.mock-prob-icon-alert { color: #f57c00; font-size: 12px; }
+.mock-prob-pct { font-size: 12px; font-weight: 600; color: #d32f2f; }
+.mock-prob-pct-orange { color: #e65100; }
+
+/* Коучинг */
+.mock-coach-box { background: #f0faf4; border: 1px solid #c8e6c9; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.mock-coach-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.mock-coach-dot { width: 8px; height: 8px; border-radius: 50%; background: #00A046; }
+.mock-coach-title { font-size: 13px; font-weight: 600; color: #1b5e20; }
+.mock-coach-text { font-size: 12px; color: #2e7d32; line-height: 1.5; margin-bottom: 8px; }
+.mock-coach-plan { font-size: 11px; color: #388e3c; background: #e8f5ee; border-radius: 5px; padding: 5px 8px; margin-bottom: 8px; }
+.mock-coach-btns { display: flex; gap: 6px; }
+.mock-coach-btn-ok { background: #fff; border: 1px solid #a5d6a7; color: #2e7d32; font-size: 11px; padding: 4px 12px; border-radius: 6px; cursor: default; }
+.mock-coach-btn-do { background: #00A046; border: none; color: #fff; font-size: 11px; padding: 4px 12px; border-radius: 6px; cursor: default; }
+
+/* Метрики разговора */
+.mock-metrics-box { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 12px; margin-top: 8px; }
+.mock-metrics-title { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+.mock-metrics-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.mock-metric-item { text-align: center; }
+.mock-metric-val { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+.mock-metric-lbl { font-size: 10px; color: #999; margin-top: 1px; }
+.mock-metric-norm { font-size: 10px; margin-top: 2px; }
+.norm-ok { color: #00A046; }
+.norm-warn { color: #e65100; }
+
+/* Звонки таблица */
+.mock-table-wrap { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+.mock-tabs { display: flex; border-bottom: 1px solid #ebebeb; }
+.mock-tab { font-size: 12px; padding: 8px 14px; color: #999; cursor: default; border-bottom: 2px solid transparent; }
+.mock-tab.act { color: #00A046; border-bottom: 2px solid #00A046; font-weight: 500; }
+.mock-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mock-table th { padding: 7px 10px; text-align: left; font-size: 11px; color: #999; font-weight: 500; border-bottom: 1px solid #f0f0f0; background: #fafafa; }
+.mock-table td { padding: 7px 10px; border-bottom: 1px solid #f8f8f8; color: #444; }
+.mock-table tr:last-child td { border-bottom: none; }
+.call-tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+.call-tag-buyer { background: #e3f2fd; color: #1565c0; }
+.call-tag-agent { background: #f3e5f5; color: #6a1b9a; }
+.call-status-ok { color: #00A046; font-weight: 500; }
+.call-status-miss { color: #d32f2f; font-weight: 500; }
+.call-status-busy { color: #f57c00; font-weight: 500; }
+.call-score { font-weight: 600; color: #00703a; }
+.call-summary { color: #888; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Активность */
+.mock-activity-row { display: flex; align-items: flex-end; gap: 3px; height: 36px; margin: 4px 0 8px; }
+.act-bar { border-radius: 2px 2px 0 0; min-width: 6px; flex: 1; }
+
+/* РОП — таблица агентов */
+.mock-agents-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.mock-agents-table th { padding: 7px 8px; text-align: left; font-size: 11px; color: #999; font-weight: 500; border-bottom: 1px solid #ebebeb; background: #fafafa; white-space: nowrap; }
+.mock-agents-table td { padding: 8px 8px; border-bottom: 1px solid #f5f5f5; color: #333; }
+.mock-agents-table tr:last-child td { border-bottom: none; }
+.pct-good { color: #00703a; font-weight: 600; }
+.pct-warn { color: #e65100; font-weight: 600; }
+.pct-bad { color: #d32f2f; font-weight: 600; }
+.agent-name-cell { font-weight: 500; color: #1a1a1a; }
+
+/* Чаты без ответа */
+.mock-alert-box { background: #fff8f8; border: 1px solid #ffcdd2; border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
+.mock-alert-title { font-size: 12px; font-weight: 600; color: #c62828; margin-bottom: 6px; display: flex; align-items: center; gap: 5px; }
+.mock-chat-miss-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #fde8e8; }
+.mock-chat-miss-row:last-child { border-bottom: none; }
+.mock-chat-name { font-size: 12px; color: #333; }
+.mock-chat-agent { font-size: 11px; color: #999; }
+.mock-chat-time { font-size: 11px; color: #d32f2f; font-weight: 500; }
+.ptag { display: inline-block; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; font-weight: 600; }
+.ptag-a { background: #00A046; color: #fff; }
+.ptag-c { background: #1565c0; color: #fff; }
+
+/* Качество команды */
+.mock-team-quality { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 14px; margin-bottom: 10px; }
+.mock-team-score-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 10px; }
+.mock-team-score-big { font-size: 36px; font-weight: 700; color: #f57c00; line-height: 1; }
+.mock-team-score-sub { font-size: 11px; color: #f57c00; margin-top: 3px; }
+.mock-team-score-detail { font-size: 11px; color: #999; margin-top: 2px; }
+.mock-agents-scores { flex: 1; }
+.mock-agent-score-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #f5f5f5; }
+.mock-agent-score-row:last-child { border-bottom: none; }
+.mock-agent-score-name { font-size: 12px; color: #444; }
+.mock-score-dots { display: flex; gap: 2px; align-items: center; }
+.sdot { width: 10px; height: 6px; border-radius: 2px; display: inline-block; }
+.mock-agent-num { font-size: 12px; font-weight: 600; margin-left: 6px; }
+
+/* Аналитика — графики */
+.mock-chart-box { background: #fff; border: 1px solid #ebebeb; border-radius: 8px; padding: 12px 14px; margin-bottom: 8px; }
+.mock-chart-title { font-size: 12px; font-weight: 600; color: #555; margin-bottom: 8px; }
+.mock-bar-chart { display: flex; align-items: flex-end; gap: 3px; height: 52px; }
+.mock-bar-group { display: flex; flex-direction: column; justify-content: flex-end; flex: 1; gap: 1px; }
+.mock-bar { border-radius: 2px 2px 0 0; }
+.mock-chart-legend { display: flex; gap: 12px; margin-top: 6px; }
+.mock-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #888; }
+.mock-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+.mock-funnel-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid #f5f5f5; }
+.mock-funnel-row:last-child { border-bottom: none; }
+.mock-funnel-label { font-size: 12px; color: #555; }
+.mock-funnel-val { font-size: 13px; font-weight: 600; color: #1a1a1a; }
+.mock-funnel-bar-wrap { flex: 1; margin: 0 10px; }
+.mock-funnel-bar-bg { background: #f0f0f0; border-radius: 3px; height: 5px; }
+.mock-funnel-bar-fill { border-radius: 3px; height: 5px; }
+
+/* Nav */
+.nav-row { display: flex; gap: 10px; align-items: center; margin-top: 28px; }
+.btn-next { background: #00A046; color: #fff; border: none; border-radius: 8px; padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; flex: 1; }
+.btn-next:hover { background: #008a3c; }
+.btn-next:disabled { background: #b2dfcc; cursor: default; }
+.btn-back { background: #fff; color: #333; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 14px 20px; font-size: 15px; cursor: pointer; transition: border-color 0.2s; }
+.btn-back:hover { border-color: #aaa; }
+
+.rating-row { display: flex; gap: 8px; justify-content: center; margin: 12px 0; flex-wrap: wrap; }
+.r-btn { width: 44px; height: 44px; border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: #333; }
+.r-btn:hover { border-color: #00A046; }
+.r-btn.selected { border-color: #00A046; background: #00A046; color: #fff; }
+
+.interest-options { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.int-opt { background: #fff; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 12px 16px; font-size: 14px; color: #333; cursor: pointer; transition: all 0.15s; user-select: none; }
+.int-opt:hover { border-color: #00A046; }
+.int-opt.selected { border-color: #00A046; background: #f0faf4; color: #007a35; }
+
+.contact-form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.cf-input { background: #fff; border: 1.5px solid #e0e0e0; border-radius: 8px; padding: 12px 14px; font-size: 14px; color: #333; outline: none; font-family: inherit; transition: border-color 0.15s; }
+.cf-input:focus { border-color: #00A046; }
+.cf-input::placeholder { color: #bbb; }
+
+.success-screen { text-align: center; padding: 48px 20px; }
+.success-icon { width: 72px; height: 72px; background: #f0faf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 28px; color: #00A046; border: 2px solid #c3e8d4; }
+.success-title { font-size: 24px; font-weight: 600; color: #1a1a1a; margin-bottom: 10px; }
+.success-sub { font-size: 15px; color: #666; max-width: 400px; margin: 0 auto; line-height: 1.6; }
+
+.admin-toggle { text-align: center; margin-top: 24px; }
+.admin-btn { background: none; border: none; color: #ccc; font-size: 14px; cursor: pointer; padding: 8px; }
+.admin-panel { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 24px; margin-top: 16px; display: none; }
+.admin-panel.open { display: block; }
+.admin-title { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 20px; }
+.stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; color: #555; }
+.stat-val { font-weight: 600; color: #1a1a1a; }
+.chart-bar-wrap { margin: 6px 0; }
+.chart-bar-label { font-size: 13px; color: #555; margin-bottom: 4px; display: flex; justify-content: space-between; }
+.chart-bar-bg { background: #f0f0f0; border-radius: 4px; height: 8px; }
+.chart-bar-fill { background: #00A046; border-radius: 4px; height: 8px; }
+.no-data { text-align: center; padding: 24px; color: #aaa; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="avito-header">
+  <div class="avito-logo">А</div>
+  <span class="avito-header-title">Авито Недвижимость — исследование нового инструмента</span>
+</div>
+
+<div class="survey-body">
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:10%"></div></div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="step-label">Шаг 1 из 7</div>
+    <div class="step-title">Расскажите о себе</div>
+    <div class="step-sub">Это поможет нам показать наиболее релевантный функционал</div>
+    <div class="role-cards">
+      <div class="role-card" onclick="selectRole('agent',this)">
+        <div class="role-icon">🧑‍💼</div>
+        <div class="role-name">Я агент</div>
+        <div class="role-desc">Работаю самостоятельно или в агентстве, веду клиентов и объекты</div>
+      </div>
+      <div class="role-card" onclick="selectRole('rop',this)">
+        <div class="role-icon">👔</div>
+        <div class="role-name">Я РОП / руководитель</div>
+        <div class="role-desc">Управляю командой агентов, отвечаю за результат отдела</div>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-next" id="nextStep1" onclick="goTo(2)" disabled>Продолжить</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="step-label" id="step2label">Шаг 2 из 7</div>
+    <div class="step-title" id="step2title"></div>
+    <div class="step-sub">Займёт меньше минуты</div>
+    <div id="step2content"></div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(1)">Назад</button>
+      <button class="btn-next" onclick="goTo(3)">Продолжить</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="step-label" id="step3label"></div>
+    <div class="step-title" id="step3title"></div>
+    <div class="step-sub" id="step3sub"></div>
+    <div id="step3demo"></div>
+    <div style="font-size:12px;color:#aaa;background:#f9f9f9;border-radius:8px;padding:10px 14px;margin-bottom:4px;">💡 Это пример возможной реализации — финальный вид интерфейса может отличаться. Главное — общая идея функционала.</div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(2)">Назад</button>
+      <button class="btn-next" onclick="goTo(4)">Далее</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="step-label" id="step4label"></div>
+    <div class="step-title" id="step4title"></div>
+    <div class="step-sub" id="step4sub"></div>
+    <div id="step4demo"></div>
+    <div style="font-size:12px;color:#aaa;background:#f9f9f9;border-radius:8px;padding:10px 14px;margin-bottom:4px;">💡 Это пример возможной реализации — финальный вид интерфейса может отличаться. Главное — общая идея функционала.</div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(3)">Назад</button>
+      <button class="btn-next" onclick="goTo(5)">Далее</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" id="step5">
+    <div class="step-label" id="step5label"></div>
+    <div class="step-title" id="step5title"></div>
+    <div class="step-sub" id="step5sub"></div>
+    <div id="step5demo"></div>
+    <div style="font-size:12px;color:#aaa;background:#f9f9f9;border-radius:8px;padding:10px 14px;margin-bottom:4px;">💡 Это пример возможной реализации — финальный вид интерфейса может отличаться. Главное — общая идея функционала.</div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(4)">Назад</button>
+      <button class="btn-next" onclick="goTo(6)">Далее</button>
+    </div>
+  </div>
+
+  <!-- STEP 6 -->
+  <div class="step" id="step6">
+    <div class="step-label">Шаг 6 из 7</div>
+    <div class="step-title">Оцените инструмент</div>
+    <div class="step-sub">Вы посмотрели демо — поделитесь впечатлением</div>
+    <div class="q-block">
+      <div class="q-label">Насколько это было бы полезно в вашей работе? (1 — совсем нет, 10 — очень)</div>
+      <div class="rating-row" id="ratingRow">
+        <button class="r-btn" onclick="selectRating(1)">1</button>
+        <button class="r-btn" onclick="selectRating(2)">2</button>
+        <button class="r-btn" onclick="selectRating(3)">3</button>
+        <button class="r-btn" onclick="selectRating(4)">4</button>
+        <button class="r-btn" onclick="selectRating(5)">5</button>
+        <button class="r-btn" onclick="selectRating(6)">6</button>
+        <button class="r-btn" onclick="selectRating(7)">7</button>
+        <button class="r-btn" onclick="selectRating(8)">8</button>
+        <button class="r-btn" onclick="selectRating(9)">9</button>
+        <button class="r-btn" onclick="selectRating(10)">10</button>
+      </div>
+    </div>
+    <div class="q-block">
+      <div class="q-label">Что зацепило больше всего? (можно несколько)</div>
+      <div class="interest-options" id="featureOpts">
+        <div class="int-opt" onclick="toggleFeature(this,'Аналитика звонков и оценка качества')">Аналитика звонков и оценка качества</div>
+        <div class="int-opt" onclick="toggleFeature(this,'Автоматическое саммари по каждому звонку')">Автоматическое саммари по каждому звонку</div>
+        <div class="int-opt" onclick="toggleFeature(this,'Персональный коучинг и рекомендации')">Персональный коучинг и рекомендации</div>
+        <div class="int-opt" id="ropF1" style="display:none" onclick="toggleFeature(this,'Контроль всей команды в одном месте')">Контроль всей команды в одном месте</div>
+        <div class="int-opt" id="ropF2" style="display:none" onclick="toggleFeature(this,'Чаты без ответа и пропущенные звонки')">Чаты без ответа и пропущенные звонки</div>
+        <div class="int-opt" id="ropF3" style="display:none" onclick="toggleFeature(this,'Сравнение агентов по метрикам')">Сравнение агентов по метрикам</div>
+      </div>
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(5)">Назад</button>
+      <button class="btn-next" id="nextStep6" onclick="goTo(7)" disabled>Продолжить</button>
+    </div>
+  </div>
+
+  <!-- STEP 7 -->
+  <div class="step" id="step7">
+    <div class="step-label">Шаг 7 из 7</div>
+    <div class="step-title">Хотите попробовать первыми?</div>
+    <div class="step-sub">Оставьте контакт — мы пригласим вас в закрытый пилот и расскажем о запуске</div>
+    <div class="contact-form">
+      <input class="cf-input" id="cfName" type="text" placeholder="Ваше имя" oninput="checkContact()">
+      <input class="cf-input" id="cfPhone" type="tel" placeholder="Телефон или Telegram" oninput="checkContact()">
+      <input class="cf-input" id="cfAgency" type="text" placeholder="Название агентства (необязательно)">
+    </div>
+    <div class="nav-row">
+      <button class="btn-back" onclick="goTo(6)">Назад</button>
+      <button class="btn-next" id="nextStep7" onclick="submitSurvey()" disabled>Отправить</button>
+    </div>
+    <div style="text-align:center;margin-top:14px;">
+      <span style="font-size:13px;color:#aaa;cursor:pointer;text-decoration:underline;" onclick="submitSurvey(true)">Пропустить, не хочу оставлять контакт</span>
+    </div>
+  </div>
+
+  <!-- STEP 8 -->
+  <div class="step" id="step8">
+    <div class="success-screen">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Спасибо за участие!</div>
+      <div class="success-sub" id="successSub">Ваши ответы помогут нам сделать инструмент лучше. Мы свяжемся с вами, когда откроется пилот.</div>
+    </div>
+    <div class="admin-toggle">
+      <button class="admin-btn" onclick="toggleAdmin()">● ● ●</button>
+    </div>
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-title">Сводка ответов</div>
+      <div id="adminContent"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let role = null;
+let answers = { role:null, qual:{}, rating:0, features:[], name:'', phone:'', agency:'' };
+let selectedFeatures = [];
+
+function selectRole(r, el) {
+  role = r; answers.role = r;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('nextStep1').disabled = false;
+  renderQual(); renderDemos();
+  ['ropF1','ropF2','ropF3'].forEach(id => {
+    document.getElementById(id).style.display = r==='rop' ? 'block' : 'none';
+  });
+}
+
+function renderQual() {
+  const c = document.getElementById('step2content');
+  if (role==='agent') {
+    document.getElementById('step2title').textContent = 'Расскажите о своей работе';
+    c.innerHTML = `
+      <div class="q-block"><div class="q-label">Сколько объявлений у вас активно сейчас?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'listings','1–2')">1–2</div>
+          <div class="q-opt" onclick="selectQ(this,'listings','3–5')">3–5</div>
+          <div class="q-opt" onclick="selectQ(this,'listings','5+')">5+</div>
+        </div>
+      </div>
+      <div class="q-block"><div class="q-label">Сколько звонков от покупателей получаете в день?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'calls','1–5')">1–5</div>
+          <div class="q-opt" onclick="selectQ(this,'calls','6–15')">6–15</div>
+          <div class="q-opt" onclick="selectQ(this,'calls','15+')">15+</div>
+        </div>
+      </div>
+      <div class="q-block"><div class="q-label">Как сейчас отслеживаете качество своих звонков?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'track','Никак')">Никак</div>
+          <div class="q-opt" onclick="selectQ(this,'track','Память/заметки')">Память / заметки</div>
+          <div class="q-opt" onclick="selectQ(this,'track','CRM')">CRM</div>
+          <div class="q-opt" onclick="selectQ(this,'track','Руководитель слушает')">Руководитель слушает</div>
+        </div>
+      </div>`;
+  } else {
+    document.getElementById('step2title').textContent = 'Расскажите о своей команде';
+    c.innerHTML = `
+      <div class="q-block"><div class="q-label">Сколько агентов в вашем отделе?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'team','2–5')">2–5</div>
+          <div class="q-opt" onclick="selectQ(this,'team','6–15')">6–15</div>
+          <div class="q-opt" onclick="selectQ(this,'team','16–30')">16–30</div>
+          <div class="q-opt" onclick="selectQ(this,'team','30+')">30+</div>
+        </div>
+      </div>
+      <div class="q-block"><div class="q-label">Как сейчас контролируете качество работы агентов?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'ctrl','Прослушиваю вручную')">Прослушиваю вручную</div>
+          <div class="q-opt" onclick="selectQ(this,'ctrl','CRM + отчёты')">CRM + отчёты</div>
+          <div class="q-opt" onclick="selectQ(this,'ctrl','По результату (сделкам)')">По результату</div>
+          <div class="q-opt" onclick="selectQ(this,'ctrl','Никак системно')">Никак системно</div>
+        </div>
+      </div>
+      <div class="q-block"><div class="q-label">Какая главная проблема с качеством звонков у команды?</div>
+        <div class="q-options">
+          <div class="q-opt" onclick="selectQ(this,'prob','Не фиксируют следующий шаг')">Не фиксируют следующий шаг</div>
+          <div class="q-opt" onclick="selectQ(this,'prob','Теряют клиентов')">Теряют клиентов</div>
+          <div class="q-opt" onclick="selectQ(this,'prob','Не вижу слабых мест')">Не вижу слабых мест</div>
+          <div class="q-opt" onclick="selectQ(this,'prob','Долго отвечают')">Долго отвечают</div>
+        </div>
+      </div>`;
+  }
+}
+
+function agentDemos() {
+  return [
+    {
+      label:'Демо 1 из 3', title:'Ваш личный дашборд',
+      sub:'Все ключевые показатели по звонкам, чатам и объявлениям в одном месте. Авито сразу подсвечивает где теряете клиентов.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Мой ассистент</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ЕН</div>Евгений Н.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-greeting">Привет, Евгений!</div>
+          <div class="mock-subgreeting">Твой день — что важного</div>
+          <div class="mock-section-label">Звонки</div>
+          <div class="mock-cards-row">
+            <div class="mock-card"><div class="mock-card-num">21</div><div class="mock-card-lbl">Звонков</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-red">44%</div><div class="mock-card-lbl">Отвечено</div><div class="mock-card-badge badge-warn">⚠ Низкий</div></div>
+            <div class="mock-card"><div class="mock-card-num">7</div><div class="mock-card-lbl">Покупателей</div></div>
+          </div>
+          <div class="mock-section-label">Объявления</div>
+          <div class="mock-cards-row">
+            <div class="mock-card"><div class="mock-card-num">2 417</div><div class="mock-card-lbl">Просмотров</div></div>
+            <div class="mock-card"><div class="mock-card-num">184</div><div class="mock-card-lbl">В избранном</div></div>
+            <div class="mock-card"><div class="mock-card-num">31</div><div class="mock-card-lbl">Расхлопов</div></div>
+          </div>
+          <div class="mock-section-label">Чаты</div>
+          <div class="mock-cards-row">
+            <div class="mock-card"><div class="mock-card-num">37</div><div class="mock-card-lbl">Чатов</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-red">46%</div><div class="mock-card-lbl">Отвечено</div><div class="mock-card-badge badge-warn">⚠ Низкий</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-orange">1.8 ч</div><div class="mock-card-lbl">Время ответа</div><div class="mock-card-badge badge-slow">⏱ Медленно</div></div>
+          </div>
+        </div>
+      </div>`
+    },
+    {
+      label:'Демо 2 из 3', title:'Тренер звонков и анализ качества',
+      sub:'ИИ разбирает каждый ваш звонок, находит частые ошибки и даёт конкретные советы как улучшить конверсию.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Мой ассистент</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ЕН</div>Евгений Н.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-quality-box">
+            <div class="mock-score-row">
+              <div>
+                <div style="font-size:11px;color:#999;margin-bottom:2px;">Качество звонков · 12 оценено</div>
+                <div style="display:flex;align-items:baseline;gap:4px;">
+                  <span class="mock-score-big">5.2</span>
+                  <span class="mock-score-denom">/ 10</span>
+                </div>
+                <div class="mock-score-badge" style="margin-top:4px;">Требует внимания</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:11px;color:#999;">Рост</div>
+                <div style="font-size:16px;font-weight:700;color:#00A046;">6.1</div>
+              </div>
+            </div>
+            <div class="mock-problems-title">Частые проблемы</div>
+            <div class="mock-prob-row"><div class="mock-prob-label"><span class="mock-prob-icon-warn">⊘</span>Клиент уходит без договорённости о показе</div><div class="mock-prob-pct">71%</div></div>
+            <div class="mock-prob-row"><div class="mock-prob-label"><span class="mock-prob-icon-warn">⊘</span>Не выясняет бюджет и сроки покупки</div><div class="mock-prob-pct">49%</div></div>
+            <div class="mock-prob-row" style="border-bottom:none"><div class="mock-prob-label"><span class="mock-prob-icon-alert">⚠</span>Разговор заканчивается без чёткого следующего шага</div><div class="mock-prob-pct mock-prob-pct-orange">83%</div></div>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#00703a;margin:10px 0 6px;display:flex;align-items:center;gap:6px;"><span>✦</span> Коучинг — фокус на сегодня</div>
+          <div class="mock-coach-box">
+            <div class="mock-coach-header"><div class="mock-coach-dot"></div><div class="mock-coach-title">Договаривайся о показе в конце звонка</div></div>
+            <div class="mock-coach-text">В 71% звонков клиент уходит без конкретной даты показа. Предлагайте слот сами, не ждите инициативы от клиента.</div>
+            <div class="mock-coach-plan">План: в следующих 3 звонках предложите конкретную дату показа до того, как клиент начнёт прощаться</div>
+            <div class="mock-coach-btns"><button class="mock-coach-btn-ok">Понятно</button><button class="mock-coach-btn-do">Сделаю</button></div>
+          </div>
+          <div class="mock-coach-box">
+            <div class="mock-coach-header"><div class="mock-coach-dot"></div><div class="mock-coach-title">Уточняй бюджет и сроки в начале разговора</div></div>
+            <div class="mock-coach-text">Без понимания бюджета и срочности сложно правильно расставить приоритеты и предложить подходящий объект.</div>
+            <div class="mock-coach-plan">План: в следующих 3 звонках задавай вопрос о бюджете и сроках в первые 2 минуты разговора</div>
+            <div class="mock-coach-btns"><button class="mock-coach-btn-ok">Понятно</button><button class="mock-coach-btn-do">Сделаю</button></div>
+          </div>
+          <div class="mock-metrics-box">
+            <div class="mock-metrics-title">Показатели разговора · 11 звонков</div>
+            <div class="mock-metrics-row">
+              <div class="mock-metric-item"><div class="mock-metric-val">61%</div><div class="mock-metric-lbl">Говорите вы</div><div class="mock-metric-norm norm-warn">лучше до 50%</div></div>
+              <div class="mock-metric-item"><div class="mock-metric-val">3 из 5</div><div class="mock-metric-lbl">Уточняющих вопросов</div><div class="mock-metric-norm norm-warn">лучше 5+</div></div>
+              <div class="mock-metric-item"><div class="mock-metric-val">4 из 11</div><div class="mock-metric-lbl">Договорились о показе</div><div class="mock-metric-norm norm-warn">лучше 7+</div></div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    {
+      label:'Демо 3 из 3', title:'Журнал звонков с саммари',
+      sub:'Все звонки в одном месте — с автоматическим саммари, оценкой качества и статусом. Больше не нужно держать всё в голове.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Звонки</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ЕН</div>Евгений Н.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-table-wrap">
+            <div class="mock-tabs">
+              <div class="mock-tab act">Все</div>
+              <div class="mock-tab">Отвечено</div>
+              <div class="mock-tab">Пропущено</div>
+            </div>
+            <table class="mock-table">
+              <thead><tr><th>Дата</th><th>Тип</th><th>Скор</th><th>Длит.</th><th>Статус</th><th>Саммари</th></tr></thead>
+              <tbody>
+                <tr><td style="color:#888;">22.04, 10:14</td><td><span class="call-tag call-tag-buyer">Покупатель</span></td><td><span class="call-score">5.1</span></td><td style="color:#555;">1:03</td><td class="call-status-ok">Отвечен</td><td class="call-summary">Андрей хочет посмотреть квартиру в пятницу...</td></tr>
+                <tr><td style="color:#888;">21.04, 15:37</td><td><span class="call-tag call-tag-agent">Риэлтор</span></td><td style="color:#ccc;">—</td><td style="color:#d32f2f;">0:00</td><td class="call-status-busy">Занято</td><td class="call-summary">—</td></tr>
+                <tr><td style="color:#888;">21.04, 09:52</td><td><span class="call-tag call-tag-buyer">Покупатель</span></td><td style="color:#ccc;">—</td><td style="color:#d32f2f;">0:00</td><td class="call-status-miss">Пропущен</td><td class="call-summary">—</td></tr>
+                <tr><td style="color:#888;">20.04, 17:21</td><td><span class="call-tag call-tag-buyer">Покупатель</span></td><td><span class="call-score">4.8</span></td><td style="color:#555;">3:44</td><td class="call-status-ok">Отвечен</td><td class="call-summary">Светлана уточняет условия, рассматривает...</td></tr>
+                <tr><td style="color:#888;">19.04, 11:05</td><td><span class="call-tag call-tag-buyer">Покупатель</span></td><td style="color:#ccc;">—</td><td style="color:#d32f2f;">0:00</td><td class="call-status-miss">Пропущен</td><td class="call-summary">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#555;margin:12px 0 6px;">Пропущенные — перезвони</div>
+          <div style="background:#fff8f0;border:1px solid #ffe0b2;border-radius:8px;padding:10px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #fff0dc;">
+              <div><div style="font-size:13px;font-weight:500;color:#333;">+7 (903) 271-58-44</div><div style="font-size:11px;color:#999;">21.04, 09:52</div></div>
+              <button style="background:#00A046;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:default;">Позвонить</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">
+              <div><div style="font-size:13px;font-weight:500;color:#333;">+7 (965) 312-07-18</div><div style="font-size:11px;color:#999;">19.04, 11:05</div></div>
+              <button style="background:#00A046;color:#fff;border:none;border-radius:6px;padding:5px 14px;font-size:12px;cursor:default;">Позвонить</button>
+            </div>
+          </div>
+        </div>
+      </div>`
+    }
+  ];
+}
+
+function ropDemos() {
+  return [
+    {
+      label:'Демо 1 из 3', title:'Дашборд команды агентов',
+      sub:'Все агенты в одном экране — кто сколько звонков принял, сколько потерял, как быстро отвечает на чаты. Сразу видно где узкое место.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Команда</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ДП</div>Дмитрий П.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-cards-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:14px;">
+            <div class="mock-card"><div class="mock-card-num">98</div><div class="mock-card-lbl">Звонков</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-green">79</div><div class="mock-card-lbl">Отвечено</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-red">11</div><div class="mock-card-lbl">Пропущено</div></div>
+            <div class="mock-card"><div class="mock-card-num mock-card-num-red">214</div><div class="mock-card-lbl">Ждут ответа</div></div>
+            <div class="mock-card"><div class="mock-card-num">6</div><div class="mock-card-lbl">Агентов</div></div>
+          </div>
+          <div class="mock-table-wrap">
+            <table class="mock-agents-table">
+              <thead><tr><th>Агент</th><th>Объявл.</th><th>Звонки</th><th>Отвечено</th><th>Пропущ.</th><th>Чаты</th></tr></thead>
+              <tbody>
+                <tr><td class="agent-name-cell">Игорь В.</td><td>6</td><td>19</td><td class="pct-good">94%</td><td style="color:#00703a;">1</td><td>38</td></tr>
+                <tr><td class="agent-name-cell">Наталья К.</td><td>8</td><td>22</td><td class="pct-good">91%</td><td style="color:#00703a;">2</td><td>44</td></tr>
+                <tr><td class="agent-name-cell">Сергей Р.</td><td>4</td><td>27</td><td class="pct-bad">52%</td><td style="color:#d32f2f;">8</td><td>31</td></tr>
+                <tr><td class="agent-name-cell">Ольга Т.</td><td>5</td><td>18</td><td class="pct-warn">78%</td><td style="color:#e65100;">4</td><td>56</td></tr>
+                <tr><td class="agent-name-cell">Павел Д.</td><td>3</td><td>7</td><td class="pct-good">86%</td><td style="color:#00703a;">1</td><td>12</td></tr>
+                <tr><td class="agent-name-cell">Анна М.</td><td>4</td><td>5</td><td class="pct-good">100%</td><td style="color:#00703a;">0</td><td>33</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mock-alert-box">
+            <div class="mock-alert-title">⚠ Чаты без ответа — 214</div>
+            <div class="mock-chat-miss-row"><div><div class="mock-chat-name">Константин Р. <span class="ptag ptag-a">Avito</span></div><div class="mock-chat-agent">→ Сергей Романов</div></div><div class="mock-chat-time">11ч</div></div>
+            <div class="mock-chat-miss-row"><div><div class="mock-chat-name">Виктория С. <span class="ptag ptag-a">Avito</span></div><div class="mock-chat-agent">→ Ольга Тихонова</div></div><div class="mock-chat-time">23ч</div></div>
+            <div class="mock-chat-miss-row"><div><div class="mock-chat-name">Юрий М. <span class="ptag ptag-a">Avito</span></div><div class="mock-chat-agent">→ Сергей Романов</div></div><div class="mock-chat-time">2д</div></div>
+          </div>
+        </div>
+      </div>`
+    },
+    {
+      label:'Демо 2 из 3', title:'Качество звонков команды',
+      sub:'ИИ оценивает каждый звонок всех агентов по единым критериям. Видите общий балл команды, слабые места и кому нужна помощь.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Качество команды</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ДП</div>Дмитрий П.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-team-quality">
+            <div class="mock-team-score-row">
+              <div>
+                <div style="font-size:11px;color:#999;margin-bottom:2px;">Качество звонков команды · 43 оценено</div>
+                <div style="display:flex;align-items:baseline;gap:4px;">
+                  <span class="mock-team-score-big">5.6</span>
+                  <span style="font-size:14px;color:#bbb;">/ 10</span>
+                </div>
+                <div class="mock-team-score-sub">Требует внимания</div>
+                <div class="mock-team-score-detail">8 отл. · 29 норм. · 6 слаб.</div>
+              </div>
+              <div class="mock-agents-scores">
+                <div style="font-size:11px;color:#999;margin-bottom:4px;">По агентам</div>
+                <div class="mock-agent-score-row">
+                  <div class="mock-agent-score-name">Наталья К.</div>
+                  <div style="display:flex;align-items:center;">
+                    <div class="mock-score-dots"><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#e0e0e0;"></span></div>
+                    <span class="mock-agent-num" style="color:#00703a;">6.3</span>
+                  </div>
+                </div>
+                <div class="mock-agent-score-row">
+                  <div class="mock-agent-score-name">Игорь В.</div>
+                  <div style="display:flex;align-items:center;">
+                    <div class="mock-score-dots"><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#e0e0e0;"></span></div>
+                    <span class="mock-agent-num" style="color:#f57c00;">5.9</span>
+                  </div>
+                </div>
+                <div class="mock-agent-score-row">
+                  <div class="mock-agent-score-name">Ольга Т.</div>
+                  <div style="display:flex;align-items:center;">
+                    <div class="mock-score-dots"><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#00A046;"></span><span class="sdot" style="background:#e0e0e0;"></span><span class="sdot" style="background:#e0e0e0;"></span></div>
+                    <span class="mock-agent-num" style="color:#f57c00;">5.4</span>
+                  </div>
+                </div>
+                <div class="mock-agent-score-row">
+                  <div class="mock-agent-score-name">Сергей Р.</div>
+                  <div style="display:flex;align-items:center;">
+                    <div class="mock-score-dots"><span class="sdot" style="background:#d32f2f;"></span><span class="sdot" style="background:#d32f2f;"></span><span class="sdot" style="background:#d32f2f;"></span><span class="sdot" style="background:#e0e0e0;"></span><span class="sdot" style="background:#e0e0e0;"></span></div>
+                    <span class="mock-agent-num" style="color:#d32f2f;">4.1</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="mock-problems-title">Частые проблемы в команде</div>
+            <div class="mock-prob-row"><div class="mock-prob-label"><span class="mock-prob-icon-warn">⊘</span>Клиент уходит без договорённости о показе</div><div class="mock-prob-pct">75%</div></div>
+            <div class="mock-prob-row"><div class="mock-prob-label"><span class="mock-prob-icon-warn">⊘</span>Не выясняют бюджет и сроки покупки</div><div class="mock-prob-pct">54%</div></div>
+            <div class="mock-prob-row" style="border-bottom:none"><div class="mock-prob-label"><span class="mock-prob-icon-warn">⊘</span>Не представляются и не объясняют цель звонка</div><div class="mock-prob-pct mock-prob-pct-orange">37%</div></div>
+          </div>
+          <div class="mock-chart-box">
+            <div class="mock-chart-title">Тренд звонков по дням</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding:4px 0;">
+              <div style="flex:1;background:#e0e0e0;border-radius:3px 3px 0 0;height:30%;min-height:4px;"></div>
+              <div style="flex:1;background:#e0e0e0;border-radius:3px 3px 0 0;height:45%;min-height:4px;"></div>
+              <div style="flex:1;background:#e0e0e0;border-radius:3px 3px 0 0;height:35%;min-height:4px;"></div>
+              <div style="flex:1;background:#c8e6c9;border-radius:3px 3px 0 0;height:55%;min-height:4px;"></div>
+              <div style="flex:1;background:#c8e6c9;border-radius:3px 3px 0 0;height:48%;min-height:4px;"></div>
+              <div style="flex:1;background:#66bb6a;border-radius:3px 3px 0 0;height:70%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:80%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:100%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:85%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:90%;min-height:4px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    {
+      label:'Демо 3 из 3', title:'Аналитика объявлений и воронка',
+      sub:'Динамика активных объектов по площадкам, охват объявлений и воронка обработки звонков — всё для понимания эффективности команды.',
+      html:`<div class="mock-wrap">
+        <div class="mock-topbar">
+          <div class="mock-topbar-logo">А</div>
+          <span class="mock-topbar-title">Авито Недвижимость · Аналитика</span>
+          <div class="mock-topbar-user"><div class="mock-avatar">ДП</div>Дмитрий П.</div>
+        </div>
+        <div class="mock-body">
+          <div class="mock-chart-box">
+            <div class="mock-chart-title">Динамика объявлений — активные объекты по дням</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:60px;padding:4px 0;">
+              <div style="flex:1;background:#a5d6a7;border-radius:3px 3px 0 0;height:40%;min-height:4px;"></div>
+              <div style="flex:1;background:#a5d6a7;border-radius:3px 3px 0 0;height:50%;min-height:4px;"></div>
+              <div style="flex:1;background:#66bb6a;border-radius:3px 3px 0 0;height:55%;min-height:4px;"></div>
+              <div style="flex:1;background:#66bb6a;border-radius:3px 3px 0 0;height:65%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:75%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:85%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:100%;min-height:4px;"></div>
+              <div style="flex:1;background:#00A046;border-radius:3px 3px 0 0;height:90%;min-height:4px;"></div>
+            </div>
+            <div class="mock-chart-legend">
+              <div class="mock-legend-item"><div class="mock-legend-dot" style="background:#00A046;"></div>Avito</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div class="mock-chart-box">
+              <div class="mock-chart-title">Охват объявлений</div>
+              <div class="mock-funnel-row">
+                <div class="mock-funnel-label">Просмотры</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#00A046;width:100%;"></div></div></div>
+                <div class="mock-funnel-val">9 340</div>
+              </div>
+              <div class="mock-funnel-row">
+                <div class="mock-funnel-label">Избранное</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#66bb6a;width:10%;"></div></div></div>
+                <div class="mock-funnel-val">871</div>
+              </div>
+              <div class="mock-funnel-row" style="border-bottom:none">
+                <div class="mock-funnel-label">Расхлопы</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#a5d6a7;width:2%;"></div></div></div>
+                <div class="mock-funnel-val">143</div>
+              </div>
+            </div>
+            <div class="mock-chart-box">
+              <div class="mock-chart-title">Обработка звонков</div>
+              <div class="mock-funnel-row">
+                <div class="mock-funnel-label">Звонков</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#00A046;width:100%;"></div></div></div>
+                <div class="mock-funnel-val">98</div>
+              </div>
+              <div class="mock-funnel-row">
+                <div class="mock-funnel-label">Отвечено</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#66bb6a;width:81%;"></div></div></div>
+                <div class="mock-funnel-val">79</div>
+              </div>
+              <div class="mock-funnel-row" style="border-bottom:none">
+                <div class="mock-funnel-label">Покупатели</div>
+                <div class="mock-funnel-bar-wrap"><div class="mock-funnel-bar-bg"><div class="mock-funnel-bar-fill" style="background:#a5d6a7;width:11%;"></div></div></div>
+                <div class="mock-funnel-val">11</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    }
+  ];
+}
+
+function renderDemos() {
+  const demos = role==='agent' ? agentDemos() : ropDemos();
+  [3,4,5].forEach((step,i) => {
+    const d = demos[i];
+    document.getElementById('step'+step+'label').textContent = d.label;
+    document.getElementById('step'+step+'title').textContent = d.title;
+    document.getElementById('step'+step+'sub').textContent = d.sub;
+    document.getElementById('step'+step+'demo').innerHTML = d.html;
+  });
+}
+
+function selectQ(el, key, val) {
+  el.closest('.q-block').querySelectorAll('.q-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.qual[key] = val;
+}
+
+function selectRating(val) {
+  answers.rating = val;
+  document.querySelectorAll('#ratingRow .r-btn').forEach((b,i)=>b.classList.toggle('selected',i<val));
+  document.getElementById('nextStep6').disabled = false;
+}
+
+function toggleFeature(el, val) {
+  el.classList.toggle('selected');
+  selectedFeatures = el.classList.contains('selected')
+    ? [...selectedFeatures, val]
+    : selectedFeatures.filter(f=>f!==val);
+  answers.features = [...selectedFeatures];
+}
+
+function checkContact() {
+  const ok = document.getElementById('cfName').value.trim() && document.getElementById('cfPhone').value.trim();
+  document.getElementById('nextStep7').disabled = !ok;
+}
+
+const prog = {1:10,2:25,3:40,4:55,5:70,6:85,7:95,8:100};
+function goTo(n) {
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step'+n).classList.add('active');
+  document.getElementById('progressFill').style.width = prog[n]+'%';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function submitSurvey(skip) {
+  answers.name = document.getElementById('cfName').value.trim();
+  answers.phone = document.getElementById('cfPhone').value.trim();
+  answers.agency = document.getElementById('cfAgency').value.trim();
+  answers.skippedContact = !!skip;
+  answers.timestamp = new Date().toLocaleString('ru-RU');
+  try {
+    const existing = localStorage.getItem('survey_responses');
+    const list = existing ? JSON.parse(existing) : [];
+    list.push(answers);
+    localStorage.setItem('survey_responses', JSON.stringify(list));
+  } catch(e){}
+  sendToSheets(answers);
+  if (skip) document.getElementById('successSub').textContent = 'Ваши ответы помогут нам сделать инструмент лучше.';
+  goTo(8);
+}
+
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycbzYSyYxDI-KG5NI6zT4mMQ0LkAE5CaGnvOxMeEcR8p3Qaav9ReApIDX-Si67Pahb0AamA/exec';
+
+function sendToSheets(data) {
+  if (!SHEETS_URL || SHEETS_URL === 'ВСТАВЬ_СЮДА_URL_APPS_SCRIPT') return;
+  const payload = {
+    timestamp: data.timestamp,
+    role: data.role === 'agent' ? 'Агент' : 'РОП',
+    qual: JSON.stringify(data.qual),
+    rating: data.rating,
+    features: (data.features || []).join(', '),
+    name: data.name || '—',
+    phone: data.phone || '—',
+    agency: data.agency || '—',
+    skipped_contact: data.skippedContact ? 'Да' : 'Нет'
+  };
+  fetch(SHEETS_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {});
+}
+
+function toggleAdmin() {
+  const p = document.getElementById('adminPanel');
+  p.classList.toggle('open');
+  if (p.classList.contains('open')) loadAdmin();
+}
+
+function loadAdmin() {
+  const c = document.getElementById('adminContent');
+  try {
+    const list = JSON.parse(localStorage.getItem('survey_responses')||'[]');
+    if (!list.length) { c.innerHTML='<div class="no-data">Ответов пока нет</div>'; return; }
+    const total=list.length, agents=list.filter(r=>r.role==='agent').length, rops=list.filter(r=>r.role==='rop').length;
+    const rated=list.filter(r=>r.rating>0);
+    const avgR=rated.length?(rated.reduce((s,r)=>s+r.rating,0)/rated.length).toFixed(1):'—';
+    const contacts=list.filter(r=>r.name);
+    const featCount={};
+    list.forEach(r=>(r.features||[]).forEach(f=>{featCount[f]=(featCount[f]||0)+1;}));
+    const feats=Object.entries(featCount).sort((a,b)=>b[1]-a[1]);
+    let html=`
+      <div class="stat-row"><span>Всего ответов</span><span class="stat-val">${total}</span></div>
+      <div class="stat-row"><span>Агентов</span><span class="stat-val">${agents} (${Math.round(agents/total*100)}%)</span></div>
+      <div class="stat-row"><span>РОПов</span><span class="stat-val">${rops} (${Math.round(rops/total*100)}%)</span></div>
+      <div class="stat-row"><span>Средняя оценка</span><span class="stat-val">${avgR} / 10</span></div>
+      <div class="stat-row"><span>Оставили контакт</span><span class="stat-val">${contacts.length} (${Math.round(contacts.length/total*100)}%)</span></div>
+      <div style="margin-top:16px;font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:10px;">Что зацепило</div>`;
+    feats.forEach(([f,n])=>{
+      const p=Math.round(n/total*100);
+      html+=`<div class="chart-bar-wrap"><div class="chart-bar-label"><span>${f}</span><span>${p}%</span></div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${p}%"></div></div></div>`;
+    });
+    if (contacts.length) {
+      html+=`<div style="margin-top:16px;font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:10px;">Контакты</div>`;
+      contacts.forEach(r=>{
+        html+=`<div class="stat-row"><span>${r.name}${r.agency?' · '+r.agency:''} <span style="color:#999;font-size:11px;">(${r.role==='rop'?'РОП':'Агент'})</span></span><span class="stat-val" style="font-size:13px;">${r.phone}</span></div>`;
+      });
+    }
+    c.innerHTML=html;
+  } catch(e){c.innerHTML='<div class="no-data">Ошибка загрузки</div>';}
+}
+</script>
+</body>
+</html>
